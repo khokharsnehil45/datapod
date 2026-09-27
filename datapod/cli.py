@@ -70,6 +70,8 @@ def normalize_argv(argv: List[str]) -> List[str]:
         "-rm": "rm",
         "-delete": "rm",
         "-meta": "--meta",
+        "-metadata": "--meta",
+        "--metadata": "--meta",
         "-m": "--meta",
         "-holder": "--holder",
         "-out": "--out",
@@ -106,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     # add
     add_p = subparsers.add_parser("add", help="Store a file into the vault with metadata")
     add_p.add_argument("file", help="Path to the file to store")
-    add_p.add_argument("-meta", "--meta", dest="meta", help="Metadata (e.g. 'label | holder', 'holder=alice,env=prod')")
+    add_p.add_argument("-meta", "--meta", "--metadata", "-metadata", dest="meta", help="Metadata (e.g. 'label | holder', 'holder=alice,env=prod')")
     add_p.add_argument("-holder", "--holder", dest="holder", help="Holder / owner name explicitly")
     add_p.add_argument("-t", "--tag", dest="tags", action="append", help="Tag to associate with this pod")
 
