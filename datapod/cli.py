@@ -4,21 +4,65 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Union
 
 from datapod.vault import PodVault
 from datapod.render import render_entry_card, render_table
 
 
-def parse_metadata_arg(meta_arg: Optional[str]) -> Tuple[str, Dict[str, Any]]:
+def parse_metadata_arg(meta_arg: Optional[Union[str, List[str]]]) -> Tuple[str, Dict[str, Any]]:
     """
     Parses user metadata patterns:
-    1) "file_name | holder name"  -> holder: holder name
-    2) "holder=name,env=prod,key=val"
-    3) JSON string: '{"holder": "alice", "env": "prod"}'
+    1) Unquoted tokens: ["Confidential", "holder=Kevin"] or ["Confidential", "Kevin"]
+    2) "file_name | holder name" -> holder: holder name
+    3) "holder=name,env=prod,key=val"
+    4) JSON string: '{"holder": "alice", "env": "prod"}'
     """
     if not meta_arg:
         return "default", {}
+
+    if isinstance(meta_arg, list):
+        # Could be tokens like: ['Confidential', 'holder=Kevin'] or ['Confidential', '|', 'Kevin']
+        tokens = meta_arg
+        meta_dict: Dict[str, Any] = {}
+        holder = "default"
+        unassigned_words = []
+
+        for token in tokens:
+            if token == "|":
+                continue
+            if "=" in token:
+                k, v = token.split("=", 1)
+                k = k.strip()
+                v = v.strip()
+                if k.lower() in ("holder", "user", "owner"):
+                    holder = v
+                else:
+                    meta_dict[k] = v
+            elif ":" in token:
+                k, v = token.split(":", 1)
+                k = k.strip()
+                v = v.strip()
+                if k.lower() in ("holder", "user", "owner"):
+                    holder = v
+                else:
+                    meta_dict[k] = v
+            else:
+                unassigned_words.append(token)
+
+        if unassigned_words:
+            # If holder wasn't explicitly set with holder=X:
+            # If 2 unassigned words and no holder, treat first as label/category, second as holder
+            if holder == "default":
+                if len(unassigned_words) == 1:
+                    meta_dict["label"] = unassigned_words[0]
+                elif len(unassigned_words) >= 2:
+                    meta_dict["label"] = " ".join(unassigned_words[:-1])
+                    holder = unassigned_words[-1]
+            else:
+                meta_dict["label"] = " ".join(unassigned_words)
+
+        return holder, meta_dict
 
     meta_dict: Dict[str, Any] = {}
     holder = "default"
@@ -26,7 +70,6 @@ def parse_metadata_arg(meta_arg: Optional[str]) -> Tuple[str, Dict[str, Any]]:
     # Pipe syntax: "file_name | holder_name" or "name | holder"
     if "|" in meta_arg:
         parts = meta_arg.split("|")
-        # First part might be a label, second part is holder
         holder = parts[1].strip()
         meta_dict["label"] = parts[0].strip()
         return holder, meta_dict
@@ -108,7 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
     # add
     add_p = subparsers.add_parser("add", help="Store a file into the vault with metadata")
     add_p.add_argument("file", help="Path to the file to store")
-    add_p.add_argument("-meta", "--meta", "--metadata", "-metadata", dest="meta", help="Metadata (e.g. 'label | holder', 'holder=alice,env=prod')")
+    add_p.add_argument("-meta", "--meta", "--metadata", "-metadata", dest="meta", nargs="*", help="Metadata (e.g. -meta Confidential holder=Kevin)")
     add_p.add_argument("-holder", "--holder", dest="holder", help="Holder / owner name explicitly")
     add_p.add_argument("-t", "--tag", dest="tags", action="append", help="Tag to associate with this pod")
 
