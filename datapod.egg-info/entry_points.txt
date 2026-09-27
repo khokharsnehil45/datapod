@@ -1,3 +1,0 @@
-[console_scripts]
-datapod = datapod.cli:main
-dp = datapod.cli:main

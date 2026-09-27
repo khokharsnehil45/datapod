@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: datapod
-Version: 0.1.0
-Summary: A fast, metadata-rich content-addressable data vault and pod manager for the terminal
-Author: Snehil Khokhar
-License: MIT
-Requires-Python: >=3.9
-Description-Content-Type: text/markdown
