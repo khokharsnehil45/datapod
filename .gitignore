@@ -1,0 +1,1 @@
+.pytest_cache/\n__pycache__/\n*.pyc\n*.egg-info/\nbuild/\ndist/\n

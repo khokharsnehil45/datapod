@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datapod"
+version = "0.1.0"
+description = "A fast, metadata-rich content-addressable data vault and pod manager for the terminal"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Snehil Khokhar" }]
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+datapod = "datapod.cli:main"
+dp = "datapod.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
